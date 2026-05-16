@@ -1,0 +1,16 @@
+venv/
+.env
+__pycache__/
+*.py[cod]
+data/resumes/
+data/job_descriptions/
+data/outputs/
+.ipynb_checkpoints/
+dist/
+build/
+*.egg-info/
+.vscode/
+.idea/
+.DS_Store
+.coverage
+htmlcov/

@@ -1,0 +1,8 @@
+Flask==3.0.3
+pdfplumber==0.11.2
+scikit-learn==1.5.1
+pandas==2.2.2
+nltk==3.8.1
+matplotlib==3.9.1
+python-dotenv==1.0.1
+Werkzeug==3.0.3
