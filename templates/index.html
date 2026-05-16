@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HireMatch — Resume Parser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">HireMatch<span class="logo-dot">.</span></div>
+      <p class="tagline">Resume Intelligence Engine</p>
+    </div>
+  </header>
+
+  <main class="main">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert--{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="grid">
+
+      <!-- Single Resume Analysis -->
+      <section class="card card--primary">
+        <div class="card-label">Mode 01</div>
+        <h2 class="card-title">Single Resume<br><em>Analysis</em></h2>
+        <p class="card-desc">Upload one resume and get an instant match score, extracted skills, and gap analysis.</p>
+
+        <form action="/analyze" method="POST" enctype="multipart/form-data" class="form">
+          <div class="field">
+            <label class="field-label">Resume PDF</label>
+            <div class="file-drop" id="drop1">
+              <input type="file" name="resume" id="resume" accept=".pdf" class="file-input" required>
+              <div class="file-ui">
+                <span class="file-icon">↑</span>
+                <span class="file-text">Drop PDF or click to upload</span>
+                <span class="file-name" id="name1"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Job Description</label>
+            <textarea name="jd_text" class="textarea" rows="6"
+              placeholder="Paste the full job description here…" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--primary">
+            Analyse Resume →
+          </button>
+        </form>
+      </section>
+
+      <!-- Multi Resume Ranking -->
+      <section class="card card--secondary">
+        <div class="card-label">Mode 02</div>
+        <h2 class="card-title">Batch Ranking<br><em>& Export</em></h2>
+        <p class="card-desc">Upload multiple resumes at once. Get a ranked leaderboard and export to CSV.</p>
+
+        <form action="/rank" method="POST" enctype="multipart/form-data" class="form">
+          <div class="field">
+            <label class="field-label">Resume PDFs (multiple)</label>
+            <div class="file-drop" id="drop2">
+              <input type="file" name="resumes[]" id="resumes" accept=".pdf"
+                class="file-input" multiple required>
+              <div class="file-ui">
+                <span class="file-icon">↑</span>
+                <span class="file-text">Drop PDFs or click to upload</span>
+                <span class="file-name" id="name2"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Job Description</label>
+            <textarea name="jd_text" class="textarea" rows="6"
+              placeholder="Paste the full job description here…" required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn--secondary">
+            Rank All Resumes →
+          </button>
+        </form>
+      </section>
+
+    </div><!-- .grid -->
+
+    <footer class="footer">
+      <p>Built with Python · pdfplumber · scikit-learn · Flask</p>
+      <p class="footer-sub">TF-IDF + Cosine Similarity · No cloud, no APIs, 100% offline</p>
+    </footer>
+
+  </main>
+
+  <script>
+    // File name display
+    function bindFileInput(inputId, nameId) {
+      const input = document.getElementById(inputId);
+      const nameEl = document.getElementById(nameId);
+      if (!input) return;
+      input.addEventListener('change', () => {
+        if (input.files.length === 1) {
+          nameEl.textContent = input.files[0].name;
+        } else if (input.files.length > 1) {
+          nameEl.textContent = `${input.files.length} files selected`;
+        }
+      });
+    }
+    bindFileInput('resume', 'name1');
+    bindFileInput('resumes', 'name2');
+  </script>
+
+</body>
+</html>
