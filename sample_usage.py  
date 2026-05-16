@@ -1,0 +1,145 @@
+"""
+sample_usage.py
+---------------
+Demonstrates how to use core/parser.py in real scenarios.
+
+Run from the project root (with venv active):
+    python sample_usage.py
+"""
+
+import logging
+import sys
+from pathlib import Path
+
+# Make sure Python can find the core package when running from project root
+sys.path.insert(0, str(Path(__file__).parent))
+
+from core.parser import ParseResult, get_text_only, parse_multiple_pdfs, parse_pdf
+
+# ---------------------------------------------------------------------------
+# Set up logging so we can see INFO messages in the terminal
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(name)s — %(message)s",
+    datefmt="%H:%M:%S",
+)
+
+
+# ===========================================================================
+# EXAMPLE 1 — Parse a single PDF and inspect the result
+# ===========================================================================
+def example_single_pdf():
+    print("\n" + "=" * 60)
+    print("EXAMPLE 1: Single PDF")
+    print("=" * 60)
+
+    result: ParseResult = parse_pdf("data/resumes/john_doe.pdf")
+
+    if result.success:
+        print(f"File      : {result.file_path}")
+        print(f"Pages     : {result.page_count}")
+        print(f"Characters: {len(result.text)}")
+        print(f"\n--- First 300 characters ---\n{result.text[:300]}")
+    else:
+        # Graceful failure — print error, do not crash
+        print(f"[FAILED] {result.error}")
+
+
+# ===========================================================================
+# EXAMPLE 2 — Batch parse a whole folder
+# ===========================================================================
+def example_batch_parse():
+    print("\n" + "=" * 60)
+    print("EXAMPLE 2: Batch parse folder")
+    print("=" * 60)
+
+    results = parse_multiple_pdfs("data/resumes/")
+
+    for r in results:
+        status = "✓ OK" if r.success else f"✗ FAILED — {r.error}"
+        pages = f"{r.page_count} pages" if r.success else ""
+        chars = f"{len(r.text):,} chars" if r.success else ""
+        print(f"  {Path(r.file_path).name:<30} {status}  {pages}  {chars}")
+
+    # Separate successes and failures for downstream processing
+    good = [r for r in results if r.success]
+    bad  = [r for r in results if not r.success]
+    print(f"\nSummary: {len(good)} succeeded, {len(bad)} failed")
+
+
+# ===========================================================================
+# EXAMPLE 3 — Quick text extraction (no metadata needed)
+# ===========================================================================
+def example_quick_text():
+    print("\n" + "=" * 60)
+    print("EXAMPLE 3: Quick text extraction")
+    print("=" * 60)
+
+    text = get_text_only("data/resumes/jane_smith.pdf")
+
+    if text:
+        print(f"Extracted {len(text):,} characters.")
+        print(f"Preview: {text[:200]}")
+    else:
+        print("No text returned (file missing or corrupt).")
+
+
+# ===========================================================================
+# EXAMPLE 4 — Handling a corrupted / missing PDF without crashing
+# ===========================================================================
+def example_error_handling():
+    print("\n" + "=" * 60)
+    print("EXAMPLE 4: Error handling")
+    print("=" * 60)
+
+    test_cases = [
+        "data/resumes/does_not_exist.pdf",   # missing file
+        "data/resumes/corrupted.pdf",         # corrupt (if present)
+        "data/resumes/not_a_pdf.txt",         # wrong extension
+    ]
+
+    for path in test_cases:
+        result = parse_pdf(path)
+        if result.success:
+            print(f"  [OK]     {path} — {result.page_count} pages")
+        else:
+            # The error is stored; the program keeps running
+            print(f"  [ERROR]  {path}")
+            print(f"           → {result.error}")
+
+
+# ===========================================================================
+# EXAMPLE 5 — Iterate over batch results and feed text to next pipeline step
+# ===========================================================================
+def example_pipeline_handoff():
+    print("\n" + "=" * 60)
+    print("EXAMPLE 5: Handing off to next pipeline step")
+    print("=" * 60)
+
+    results = parse_multiple_pdfs("data/resumes/")
+
+    # Only pass successfully parsed texts downstream
+    texts = {
+        Path(r.file_path).stem: r.text
+        for r in results
+        if r.success and r.text
+    }
+
+    print(f"Passing {len(texts)} resume(s) to preprocessor…")
+    for name, text in texts.items():
+        # In the real pipeline this would be:
+        #   from core.preprocessor import preprocess
+        #   tokens = preprocess(text)
+        print(f"  → {name}: {len(text):,} chars ready for NLP")
+
+
+# ===========================================================================
+# Entry point
+# ===========================================================================
+if __name__ == "__main__":
+    example_single_pdf()
+    example_batch_parse()
+    example_quick_text()
+    example_error_handling()
+    example_pipeline_handoff()
