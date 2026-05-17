@@ -7,6 +7,7 @@
 ![Tests](https://img.shields.io/badge/Tests-284%20passing-brightgreen?logo=pytest&style=flat-square)
 ![Coverage](https://img.shields.io/badge/Coverage-70%25-yellow?style=flat-square)
 ![REST API](https://img.shields.io/badge/REST_API-Implemented-blue?style=flat-square)
+![CI](https://github.com/AtharvaVavhal/HireMatch/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ---
@@ -29,16 +30,18 @@ HireMatch analyses how well a resume matches a job description using classical N
 | **Text Preprocessing** | Lowercase → URL/email strip → punctuation removal → NLTK lemmatisation |
 | **Hybrid Scoring** | Combined **TF-IDF Semantic Similarity** (40%) + **Keyword Density** (60%) |
 | **REST API** | Full programmatic access via `/api/analyze` and `/api/rank` endpoints |
+| **Visualizations** | Candidate ranking charts, skill radar charts, and score distribution histograms with PNG export |
 | **Skill Extraction** | Rule-based extraction of 300+ skills across 10+ categories |
 | **Batch Ranking** | Optimized batch vectorization for high-performance ranking (O(1) fits) |
 | **CSV Export** | Export candidate leaderboards directly to spreadsheets |
+| **CI/CD Pipeline** | Automated testing and linting via GitHub Actions |
 | **Fully Offline** | 100% data privacy — zero external cloud calls or API keys required |
 
 ---
 
 ## 🏗 Architecture
 
-```
+```text
 resume_job_matcher/
 ├── core/                   # Pure business logic (no Flask)
 │   ├── parser.py           # PDF → text (pdfplumber)
@@ -46,31 +49,30 @@ resume_job_matcher/
 │   ├── scorer.py           # TF-IDF + cosine similarity
 │   ├── skill_extractor.py  # Rule-based skill detection
 │   ├── visualizer.py       # Ranking, DataFrame, CSV export
+│   ├── visualizations.py   # Chart generation (matplotlib/seaborn)
+│   ├── cleanup.py          # Auto-deletion of stale uploads
 │   └── logging_config.py   # Centralised logging setup
 ├── app/
-│   ├── routes.py           # Flask Blueprint (HTTP layer only)
+│   ├── api.py              # REST API Blueprint (JSON endpoints)
+│   ├── chart_routes.py     # Charts Blueprint (Data visualization)
+│   ├── routes.py           # Web UI Blueprint (HTML forms)
 │   └── config.py           # Dev / Prod / Test configuration
 ├── data/
 │   └── skills_dict.py      # Skill taxonomy + aliases (300+ skills)
 ├── templates/              # Jinja2 HTML templates
-├── static/                 # CSS + JS
-├── tests/                  # 277-test pytest suite
+├── static/                 # CSS + JS assets
+├── tests/                  # Comprehensive pytest suite
 │   ├── conftest.py
-│   ├── test_parser.py
-│   ├── test_preprocessor.py
-│   ├── test_scorer.py
-│   ├── test_scorer_extended.py
-│   ├── test_skill_extractor.py
-│   ├── test_routes.py
-│   └── test_integration_pipeline.py
+│   ├── e2e_test_atharva.py
+│   ├── test_api.py
+│   └── ...                 # Unit and integration tests
+├── .github/workflows/      # GitHub Actions CI/CD pipelines
 ├── run.py                  # App factory + entry point
 ├── gunicorn.conf.py        # Production WSGI config
 ├── Procfile                # Render / Railway deploy
-├── pyproject.toml          # pytest + coverage + black + isort
+├── pyproject.toml          # Code quality tooling config
 ├── Makefile                # Developer task runner
-├── requirements.txt
-├── requirements-dev.txt
-└── .env.example
+└── requirements*.txt       # Dependencies
 ```
 
 ### Data Flow
@@ -85,6 +87,7 @@ graph TD
     F --> G[Visualization Engine]
     G --> H[Ranked Results / CSV]
     G --> I[JSON API Response]
+    G --> J[Chart Visualizations]
 ```
 
 ---
@@ -109,7 +112,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 ```bash
 pip install -r requirements-dev.txt   # includes test tools
 # or for production only:
-pip install -r requirements.txt
+pip install -r requirements-prod.txt
 ```
 
 ### 3. Configure environment
@@ -137,8 +140,10 @@ Open **http://localhost:5000**
 
 ## 🧪 Testing
 
+We employ a comprehensive testing suite (Unit, Integration, and E2E) with **284 passing tests**. Continuous Integration is handled automatically via **GitHub Actions**.
+
 ```bash
-# Run all 277 tests
+# Run all tests
 make test
 
 # With terminal coverage report
@@ -151,21 +156,10 @@ make cov
 make test-parser
 make test-scorer
 make test-skills
-make test-preprocessor
+make test-api
 make test-routes
 make test-int          # integration tests only
-
-# Stop on first failure
-make test-fast
 ```
-
-| Module | Coverage |
-|---|---|
-| `core/preprocessor.py` | **100%** |
-| `core/scorer.py` | **100%** |
-| `core/skill_extractor.py` | 98% |
-| `core/parser.py` | 94% |
-| `app/routes.py` | 83% |
 
 ---
 
@@ -173,11 +167,9 @@ make test-fast
 
 HireMatch is designed with a **privacy-first** architecture:
 - **Zero-Cloud**: No data is sent to OpenAI, Google, or any external NLP service. Everything stays on your local machine.
-- **Auto-Cleanup**: Temporary uploads and output CSVs are automatically purged every hour via `core/cleanup.py`.
+- **Auto-Cleanup**: Temporary uploads and output CSVs are automatically purged via `core/cleanup.py` routines.
 - **MIME Validation**: Secondary file-header verification prevents malicious file uploads.
 - **No Persistence**: Candidate PII is processed in-memory and not stored in any database.
-
----
 
 ---
 
@@ -189,7 +181,7 @@ HireMatch is designed with a **privacy-first** architecture:
 2. Upload a PDF resume
 3. Paste the job description
 4. Click **Analyse Resume**
-5. View match score (0–100%), matched skills, and missing skills
+5. View match score (0–100%), matched skills, missing skills, and visual skill radars.
 
 ### Mode 2 — Batch Ranking
 
@@ -197,10 +189,18 @@ HireMatch is designed with a **privacy-first** architecture:
 2. Upload multiple PDF resumes (up to 20)
 3. Paste the job description
 4. Click **Rank All Resumes**
-5. View the candidate leaderboard
-6. Download the ranked CSV
+5. View the candidate leaderboard, score distribution histograms, and ranking charts.
+6. Download the ranked CSV or export charts to PNG.
 
-### Score Interpretation
+### REST API Usage
+
+HireMatch provides programmatic access for integrations:
+- `POST /api/analyze` — Analyse a single resume.
+- `POST /api/rank` — Rank a batch of resumes.
+- `POST /charts/comparison` (and other chart routes) — Generate base64 chart images.
+- `GET /api/health` — Check system status.
+
+**Score Interpretation**
 
 | Range | Label |
 |---|---|
@@ -233,7 +233,7 @@ All settings are configurable via environment variables (see `.env.example`):
 
 1. Push to GitHub
 2. Create a new **Web Service** on [Render](https://render.com)
-3. Set **Build Command**: `pip install -r requirements.txt`
+3. Set **Build Command**: `pip install -r requirements-prod.txt`
 4. Set **Start Command**: `gunicorn -c gunicorn.conf.py "run:app"`
 5. Add environment variables in the Render dashboard:
    ```
@@ -247,16 +247,6 @@ All settings are configurable via environment variables (see `.env.example`):
 1. Connect GitHub repo on [Railway](https://railway.app)
 2. Railway auto-detects `Procfile` → uses `gunicorn -c gunicorn.conf.py "run:app"`
 3. Add `SECRET_KEY` and `FLASK_ENV=production` in Variables tab
-
-### Platform comparison
-
-| | Render | Railway | Replit |
-|---|---|---|---|
-| **Free tier** | ✅ 750h/mo | ✅ $5 credit | ✅ limited |
-| **Custom domains** | ✅ | ✅ | ❌ paid |
-| **Sleep on idle** | ✅ (free) | ❌ | ✅ |
-| **Beginner UX** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Recommended** | ✅ **Yes** | ✅ Good alt | ⚠️ Last resort |
 
 ---
 
@@ -303,6 +293,8 @@ make help          # Show all targets
 4. Ensure all tests pass: `make test`
 5. Ensure code is formatted: `make fmt && make lint`
 6. Open a Pull Request with a clear description
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 **Commit convention:**
 ```
