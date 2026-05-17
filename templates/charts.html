@@ -1,0 +1,175 @@
+<!--
+  charts.html  —  Drop this into your templates/ folder.
+  Extend your base layout as needed.
+
+  Usage in a Flask route:
+      return render_template("charts.html", job_title="Software Engineer",
+                             candidates=[{"name":"Alice","score":87}, ...])
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Match — Charts</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #F3F4F6;
+      color: #111827;
+      padding: 2rem;
+    }
+
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1.5rem; }
+    h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem;
+         color: #374151; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      padding: 1.25rem 1.5rem;
+    }
+
+    .card img { width: 100%; border-radius: 6px; }
+
+    .btn {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.45rem 1rem;
+      background: #4F8EF7;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn:hover { background: #3B79E8; }
+
+    #radar-section { grid-column: 1 / -1; }
+    #radar-controls { display: flex; gap: 0.5rem; align-items: center;
+                      flex-wrap: wrap; margin-bottom: 0.75rem; }
+    #radar-controls select, #radar-controls button {
+      padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #D1D5DB;
+      font-size: 0.9rem;
+    }
+    #radar-controls button {
+      background: #4F8EF7; color: #fff; border-color: #4F8EF7; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<h1>📊 Match Visualizations — {{ job_title }}</h1>
+
+<div class="grid">
+
+  <!-- Score Comparison -->
+  <div class="card">
+    <h2>Score Comparison</h2>
+    <img id="img-comparison" src="" alt="Score comparison chart" />
+    <a id="dl-comparison" class="btn" download="comparison_chart.png">⬇ Download PNG</a>
+  </div>
+
+  <!-- Candidate Ranking -->
+  <div class="card">
+    <h2>Candidate Ranking</h2>
+    <img id="img-ranking" src="" alt="Candidate ranking chart" />
+    <a id="dl-ranking" class="btn" download="ranking_chart.png">⬇ Download PNG</a>
+  </div>
+
+  <!-- Score Distribution -->
+  <div class="card">
+    <h2>Score Distribution</h2>
+    <img id="img-distribution" src="" alt="Score distribution chart" />
+    <a id="dl-distribution" class="btn" download="distribution_chart.png">⬇ Download PNG</a>
+  </div>
+
+  <!-- Skill Radar -->
+  <div class="card" id="radar-section">
+    <h2>Skill Match Radar</h2>
+    <div id="radar-controls">
+      <label for="radar-select">Candidate:</label>
+      <select id="radar-select">
+        {% for c in candidates %}
+          <option value="{{ c.name }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+      <button onclick="loadRadar()">Load Radar</button>
+    </div>
+    <img id="img-radar" src="" alt="Skill radar chart" style="max-width:480px;" />
+    <br/>
+    <a id="dl-radar" class="btn" download="radar_chart.png">⬇ Download PNG</a>
+  </div>
+
+</div>
+
+<script>
+  // Candidates injected from Flask (Jinja2)
+  const CANDIDATES = {{ candidates | tojson }};
+  const JOB_TITLE  = {{ job_title  | tojson }};
+
+  // Helper: POST JSON → base64 image, set src + download href
+  async function loadChart(endpoint, body, imgId, dlId) {
+    const res  = await fetch(endpoint, {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(body),
+    });
+    const json = await res.json();
+    const src  = "data:image/png;base64," + json.image;
+    document.getElementById(imgId).src = src;
+    document.getElementById(dlId).href  = src;
+  }
+
+  // Load comparison, ranking, distribution on page load
+  async function loadAll() {
+    await Promise.all([
+      loadChart("/charts/comparison",
+        { candidates: CANDIDATES, job_title: JOB_TITLE },
+        "img-comparison", "dl-comparison"),
+
+      loadChart("/charts/ranking",
+        { candidates: CANDIDATES, top_n: 10 },
+        "img-ranking", "dl-ranking"),
+
+      loadChart("/charts/distribution",
+        { candidates: CANDIDATES },
+        "img-distribution", "dl-distribution"),
+    ]);
+    // Load radar for first candidate
+    loadRadar();
+  }
+
+  // Load radar for selected candidate
+  async function loadRadar() {
+    const name = document.getElementById("radar-select").value;
+    const candidate = CANDIDATES.find(c => c.name === name);
+    // Use skill_scores if present, else synthesise from score for demo
+    const skill_scores = candidate.skill_scores || {
+      "Resume Match":   candidate.score,
+      "Experience":     Math.min(100, candidate.score + 5),
+      "Education":      Math.min(100, candidate.score - 5),
+      "Skills":         Math.min(100, candidate.score + 10),
+      "Communication":  Math.min(100, candidate.score - 8),
+    };
+
+    await loadChart("/charts/radar",
+      { candidate_name: name, skill_scores },
+      "img-radar", "dl-radar");
+  }
+
+  window.addEventListener("DOMContentLoaded", loadAll);
+</script>
+
+</body>
+</html>

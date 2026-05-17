@@ -1,0 +1,50 @@
+[tool.pytest.ini_options]
+# Root directory for test discovery
+testpaths = ["tests"]
+
+# Display: show short test summary for all non-passing outcomes
+# -v    = verbose (show test names)
+# -ra   = show extra summary for all except passed
+# --tb=short = shorter traceback for failures
+addopts = "-v -ra --tb=short"
+
+# Register custom markers to avoid PytestUnknownMarkWarning
+markers = [
+    "unit: pure unit tests with no I/O or external deps",
+    "integration: tests that span multiple modules or do file I/O",
+    "slow: tests that take longer to run (>1 second)",
+    "edge: edge-case / adversarial inputs",
+]
+
+# Log level captured during tests (visible in -v output on failure)
+log_cli = false
+log_level = "WARNING"
+
+[tool.coverage.run]
+source = ["core", "app", "utils"]
+omit = [
+    "*/venv/*",
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+# Minimum coverage percentage — CI fails if below this
+fail_under = 70
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "\\.\\.\\.",
+]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["core", "app", "utils", "data"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]

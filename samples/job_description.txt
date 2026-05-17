@@ -1,0 +1,5 @@
+Senior Full Stack Engineer (Python/React)
+- Experience with FastAPI or Flask
+- Knowledge of MongoDB and SQL
+- Familiarity with CI/CD and Docker
+- Strong analytical skills

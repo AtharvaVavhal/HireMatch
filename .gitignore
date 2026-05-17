@@ -1,16 +1,101 @@
-venv/
-.env
+# ─────────────────────────────────────
+# HireMatch — .gitignore
+# ─────────────────────────────────────
+
+# ── Python ──────────────────────────
 __pycache__/
 *.py[cod]
-data/resumes/
-data/job_descriptions/
-data/outputs/
-.ipynb_checkpoints/
+*$py.class
+*.so
+*.egg
+*.egg-info/
 dist/
 build/
-*.egg-info/
-.vscode/
-.idea/
-.DS_Store
+.eggs/
+*.pyo
+*.pyd
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ── Virtual environments ─────────────
+venv/
+.venv/
+env/
+ENV/
+.env/
+
+# ── Environment variables ────────────
+.env
+*.env
+!.env.example
+
+# ── Testing & coverage ───────────────
+.pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+*.coveragerc
+
+# ── IDE / editor ─────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.project
+.pydevproject
+
+# ── Logs ─────────────────────────────
+logs/
+*.log
+
+# ── Upload / output artefacts ────────
+uploads/
+outputs/
+data/resumes/
+data/outputs/
+
+# ── Jupyter ──────────────────────────
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# ── Distribution / packaging ─────────
+*.tar.gz
+*.whl
+*.zip
+MANIFEST
+
+# ── Type checking ─────────────────────
+.mypy_cache/
+.dmypy.json
+.pytype/
+
+# ── macOS ─────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# ── Windows ───────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Static build outputs ──────────────
+static/dist/
+static/build/
+
+# ── Misc ─────────────────────────────
+*.bak
+*.orig
+*.tmp

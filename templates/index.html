@@ -1,123 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HireMatch — Resume Parser</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>HireMatch — Resume Parser & Match Scorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-  <header class="header">
-    <div class="header-inner">
-      <div class="logo">HireMatch<span class="logo-dot">.</span></div>
-      <p class="tagline">Resume Intelligence Engine</p>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem; font-weight: 600;">Processing Intelligence...</p>
     </div>
-  </header>
 
-  <main class="main">
+    <div class="container">
+        <header class="header">
+            <a href="/" class="logo">HireMatch<span class="logo-dot">.</span></a>
+            <p class="tagline">Professional Resume Intelligence Engine</p>
+        </header>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert--{{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert--{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-    <div class="grid">
+        <div class="grid">
+            <!-- Single Analysis -->
+            <section class="card">
+                <span class="card-label">Module 01</span>
+                <h2 class="card-title">Single Resume<br><em>Analysis</em></h2>
+                <p class="card-desc">Extract skills, calculate match percentage, and identify gaps for a single candidate.</p>
 
-      <!-- Single Resume Analysis -->
-      <section class="card card--primary">
-        <div class="card-label">Mode 01</div>
-        <h2 class="card-title">Single Resume<br><em>Analysis</em></h2>
-        <p class="card-desc">Upload one resume and get an instant match score, extracted skills, and gap analysis.</p>
+                <form action="/analyze" method="POST" enctype="multipart/form-data" class="form" onsubmit="showLoading()">
+                    <div class="field">
+                        <label class="field-label">Resume PDF</label>
+                        <div class="file-drop" id="drop-single">
+                            <input type="file" name="resume" id="resume-input" accept=".pdf" class="file-input" required>
+                            <div class="file-ui">
+                                <span class="file-icon">📁</span>
+                                <span class="file-text">Click or drag PDF here</span>
+                                <span class="file-name" id="single-filename"></span>
+                            </div>
+                        </div>
+                    </div>
 
-        <form action="/analyze" method="POST" enctype="multipart/form-data" class="form">
-          <div class="field">
-            <label class="field-label">Resume PDF</label>
-            <div class="file-drop" id="drop1">
-              <input type="file" name="resume" id="resume" accept=".pdf" class="file-input" required>
-              <div class="file-ui">
-                <span class="file-icon">↑</span>
-                <span class="file-text">Drop PDF or click to upload</span>
-                <span class="file-name" id="name1"></span>
-              </div>
-            </div>
-          </div>
+                    <div class="field">
+                        <label class="field-label">Job Description</label>
+                        <textarea name="jd_text" class="textarea" rows="6" placeholder="Paste the target job description here..." required></textarea>
+                    </div>
 
-          <div class="field">
-            <label class="field-label">Job Description</label>
-            <textarea name="jd_text" class="textarea" rows="6"
-              placeholder="Paste the full job description here…" required></textarea>
-          </div>
+                    <button type="submit" class="btn btn--primary">Analyse Match →</button>
+                </form>
+            </section>
 
-          <button type="submit" class="btn btn--primary">
-            Analyse Resume →
-          </button>
-        </form>
-      </section>
+            <!-- Batch Ranking -->
+            <section class="card">
+                <span class="card-label">Module 02</span>
+                <h2 class="card-title">Batch Candidate<br><em>Ranking</em></h2>
+                <p class="card-desc">Upload multiple resumes to find the best fits. Export ranked results to CSV instantly.</p>
 
-      <!-- Multi Resume Ranking -->
-      <section class="card card--secondary">
-        <div class="card-label">Mode 02</div>
-        <h2 class="card-title">Batch Ranking<br><em>& Export</em></h2>
-        <p class="card-desc">Upload multiple resumes at once. Get a ranked leaderboard and export to CSV.</p>
+                <form action="/rank" method="POST" enctype="multipart/form-data" class="form" onsubmit="showLoading()">
+                    <div class="field">
+                        <label class="field-label">Candidate PDFs (Multiple)</label>
+                        <div class="file-drop" id="drop-batch">
+                            <input type="file" name="resumes[]" id="batch-input" accept=".pdf" class="file-input" multiple required>
+                            <div class="file-ui">
+                                <span class="file-icon">📚</span>
+                                <span class="file-text">Click or drag multiple PDFs here</span>
+                                <span class="file-name" id="batch-count"></span>
+                            </div>
+                        </div>
+                    </div>
 
-        <form action="/rank" method="POST" enctype="multipart/form-data" class="form">
-          <div class="field">
-            <label class="field-label">Resume PDFs (multiple)</label>
-            <div class="file-drop" id="drop2">
-              <input type="file" name="resumes[]" id="resumes" accept=".pdf"
-                class="file-input" multiple required>
-              <div class="file-ui">
-                <span class="file-icon">↑</span>
-                <span class="file-text">Drop PDFs or click to upload</span>
-                <span class="file-name" id="name2"></span>
-              </div>
-            </div>
-          </div>
+                    <div class="field">
+                        <label class="field-label">Job Description</label>
+                        <textarea name="jd_text" class="textarea" rows="6" placeholder="Paste the target job description here..." required></textarea>
+                    </div>
 
-          <div class="field">
-            <label class="field-label">Job Description</label>
-            <textarea name="jd_text" class="textarea" rows="6"
-              placeholder="Paste the full job description here…" required></textarea>
-          </div>
+                    <button type="submit" class="btn btn--secondary">Rank Candidates →</button>
+                </form>
+            </section>
+        </div>
 
-          <button type="submit" class="btn btn--secondary">
-            Rank All Resumes →
-          </button>
-        </form>
-      </section>
+        <footer class="footer">
+            <p>HireMatch v1.0.0 · No External APIs · 100% Data Privacy</p>
+            <p class="footer-sub">Built with Python, Scikit-Learn, and NLTK</p>
+        </footer>
+    </div>
 
-    </div><!-- .grid -->
-
-    <footer class="footer">
-      <p>Built with Python · pdfplumber · scikit-learn · Flask</p>
-      <p class="footer-sub">TF-IDF + Cosine Similarity · No cloud, no APIs, 100% offline</p>
-    </footer>
-
-  </main>
-
-  <script>
-    // File name display
-    function bindFileInput(inputId, nameId) {
-      const input = document.getElementById(inputId);
-      const nameEl = document.getElementById(nameId);
-      if (!input) return;
-      input.addEventListener('change', () => {
-        if (input.files.length === 1) {
-          nameEl.textContent = input.files[0].name;
-        } else if (input.files.length > 1) {
-          nameEl.textContent = `${input.files.length} files selected`;
+    <script>
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
         }
-      });
-    }
-    bindFileInput('resume', 'name1');
-    bindFileInput('resumes', 'name2');
-  </script>
 
+        function bindDropZone(inputId, nameId, dropId) {
+            const input = document.getElementById(inputId);
+            const nameEl = document.getElementById(nameId);
+            const dropZone = document.getElementById(dropId);
+
+            input.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files.length === 1) {
+                    nameEl.textContent = files[0].name;
+                } else if (files.length > 1) {
+                    nameEl.textContent = `${files.length} files selected`;
+                }
+            });
+
+            ['dragenter', 'dragover'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(name => {
+                dropZone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                });
+            });
+        }
+
+        bindDropZone('resume-input', 'single-filename', 'drop-single');
+        bindDropZone('batch-input', 'batch-count', 'drop-batch');
+    </script>
 </body>
 </html>

@@ -6,3 +6,4 @@ nltk==3.8.1
 matplotlib==3.9.1
 python-dotenv==1.0.1
 Werkzeug==3.0.3
+python-magic==0.4.27

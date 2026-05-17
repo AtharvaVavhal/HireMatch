@@ -1,0 +1,2 @@
+# Production WSGI server
+gunicorn==22.0.0
